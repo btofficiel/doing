@@ -1,3 +1,4 @@
 bin/
 elm/elm-stuff/
 
+.DS_Store
