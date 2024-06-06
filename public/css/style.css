@@ -129,6 +129,7 @@ textarea {
 }
 
 textarea.light {
+    background: var(--light-bg);
     border-color: var(--light-cta);
     color: var(--light-cta);
 
@@ -144,6 +145,11 @@ textarea.dark {
 textarea.dark::placeholder {
     text-align: center;
     color: var(--dark-cta);
+}
+
+textarea.light::placeholder {
+    text-align: center;
+    color: var(--light-cta);
 }
 
 div.task-cta {
