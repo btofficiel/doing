@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Html exposing (div)
-import Html.Attributes exposing (class, src)
+import Html exposing (div, img, text, textarea)
+import Html.Attributes exposing (class, placeholder, rows, src)
 import Url
 
 
@@ -13,6 +13,7 @@ import Url
 
 type alias Model =
     { key : Nav.Key
+    , taskString : String
     , url : Url.Url
     }
 
@@ -22,6 +23,7 @@ init flags url navKey =
     let
         model =
             { key = navKey
+            , taskString = ""
             , url = url
             }
     in
@@ -36,7 +38,24 @@ view : Model -> Document Msg
 view model =
     { title = "Doing"
     , body =
-        [ div [ class "content" ] []
+        [ div [ class "content light" ]
+            [ div [ class "spotlight light" ] []
+            , div [ class "timer-container disabled" ]
+                [ div [ class "elapsed-time" ] []
+                ]
+            , div [ class "menu-ctas" ]
+                [ div [ class "menu-item" ]
+                    [ img [ class "menu-cta", src "assets/settings-light.svg" ] []
+                    ]
+                ]
+            , div [ class "header" ] [ text "What's on your mind for today?" ]
+            , div [ class "input" ]
+                [ textarea [ class "light", rows 16, placeholder "Write each task on its own line and press ENTER." ] []
+                ]
+            , div [ class "task-cta" ]
+                [ img [ class "task-cta", src "assets/create-playlist-light.svg" ] []
+                ]
+            ]
         ]
     }
 
