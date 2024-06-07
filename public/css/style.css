@@ -9,6 +9,8 @@
     --light-bg: #FFFFFF;
     --light-fg: #070C0C;
     --light-cta: #737373;
+    --dark-border: #1E3333;
+    --light-border: #CCCCCC;
 }
 
 html, body {
@@ -74,7 +76,7 @@ div.menu-ctas {
     justify-content: flex-end;
 }
 
-div.menu > img.menu-cta {
+div.menu > a >img.menu-cta {
     width: 24px;
     height: 24px;
 }
@@ -126,20 +128,21 @@ textarea {
     font-weight: 500;
     font-size: 21.33px;
     border-radius: 10px;
+    outline: none;
     padding: 24px;
 }
 
 textarea.light {
     background: var(--light-bg);
-    border-color: var(--light-cta);
-    color: var(--light-cta);
+    border-color: var(--light-border);
+    color: var(--light-fg);
 
 }
 
 textarea.dark {
     background: var(--dark-bg);
-    border-color: var(--dark-cta);
-    color: var(--dark-cta);
+    border-color: var(--dark-border);
+    color: var(--dark-fg);
 }
 
 
@@ -160,6 +163,7 @@ div.task-cta {
 }
 
 div.task-cta > img {
+    cursor: pointer;
     width: 72px;
     height: 72px;
 }
