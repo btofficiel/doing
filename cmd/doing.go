@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -61,6 +62,14 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
+
+	green := "\033[32m"
+	blue := "\033[34m"
+	reset := "\033[0m"
+
+	// Printing messages in different colors
+	fmt.Println(string(green), "Server has started", string(reset))
+	fmt.Println(string(blue), "Started on localhost:8000", string(reset))
 
 	log.Fatal(srv.ListenAndServe())
 }

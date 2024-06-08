@@ -11,6 +11,12 @@
     --light-cta: #737373;
     --dark-border: #1E3333;
     --light-border: #CCCCCC;
+    --dark-preset-fg: #999999;
+    --light-preset-fg: #666666;
+    --dark-timer-total: #191E1E;
+    --dark-timer-elapsed: #474B4B;
+    --light-timer-total: #E1E1E1;
+    --light-timer-elapsed: #B5B5B5;
 }
 
 html, body {
@@ -36,6 +42,38 @@ div.content {
     grid-gap: 40px;
 }
 
+div.timer-selector {
+    grid-column: 2/3;
+    margin-top: 24px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+div.timer-preset {
+    cursor: pointer;
+    border-radius: 50px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    font-size: 16px;
+    border: 2px solid;
+    font-weight: 500;
+}
+
+div.timer-selector.light > div.timer-preset {
+    color: var(--light-preset-fg);
+    background: var(--light-bg);
+    border-color: var(--light-border);
+}
+
+div.timer-selector.dark > div.timer-preset{
+    color: var(--dark-preset-fg);
+    background: var(--dark-bg);
+    border-color: var(--dark-border);
+}
+
 div.timer-container {
     position: relative;
     grid-column: 1/4;
@@ -43,7 +81,6 @@ div.timer-container {
     margin-left: 80px;
     margin-right: 80px;
     height: 6px;
-    background: #191E1E;
     border-radius: 10px;
 }
 
@@ -57,14 +94,28 @@ div.timer-container.disabled > * {
 
 
 div.timer-container > div.elapsed-time {
-    width: 70%;
+    width: 100%;
     position: absolute;
     z-index:2;
     height: 6px;
-    background: #474B4B;
     border-radius: 10px;
 }
 
+div.timer-container.dark {
+    background: var(--dark-timer-total);
+}
+
+div.timer-container.dark > div.elapsed-time {
+    background: var(--dark-timer-elapsed);
+}
+
+div.timer-container.light {
+    background: var(--light-timer-total);
+}
+
+div.timer-container.light > div.elapsed-time {
+    background: var(--light-timer-elapsed);
+}
 
 div.menu-ctas {
     display: flex;

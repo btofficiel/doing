@@ -3,9 +3,10 @@ module Main exposing (main)
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Html exposing (Html, a, div, img, text, textarea)
-import Html.Attributes exposing (class, href, placeholder, rows, src, value)
+import Html.Attributes exposing (class, href, placeholder, rows, src, style, value)
 import Html.Events exposing (onClick, onInput)
 import Route exposing (Route, parseUrl)
+import Time
 import Url
 
 
@@ -41,6 +42,8 @@ type alias Model =
     , taskString : String
     , tasks : List Task
     , colorMode : ColorMode
+    , currentTask : Maybe Task
+    , elapsedTime : Int
     }
 
 
@@ -53,6 +56,8 @@ init flags url navKey =
             , taskString = ""
             , tasks = []
             , colorMode = Light
+            , currentTask = Nothing
+            , elapsedTime = 0
             }
     in
     ( model, Cmd.none )
@@ -75,20 +80,43 @@ getColor colorMode =
 focusView : Model -> List (Html Msg)
 focusView model =
     let
-        maybeTopTask =
-            List.head model.tasks
-
         task =
-            case maybeTopTask of
+            case model.currentTask of
                 Just t ->
                     t
 
                 Nothing ->
                     { desc = "Error", time = Nothing }
+
+        time =
+            case task.time of
+                Just t ->
+                    t
+
+                Nothing ->
+                    0
+
+        elapsedTime =
+            (toFloat (time - model.elapsedTime) / toFloat time)
+                |> (\x -> 100 * x)
+                |> max 0
+                |> String.fromFloat
+                |> (\x -> String.concat [ x, "%" ])
     in
-    [ div [ class "timer-container disabled" ]
-        [ div [ class "elapsed-time" ] []
-        ]
+    [ case task.time of
+        Just t ->
+            div [ class (String.concat [ "timer-container ", getColor model.colorMode ]) ]
+                [ div [ class "elapsed-time", style "width" elapsedTime ] []
+                ]
+
+        Nothing ->
+            div [ class (String.concat [ "timer-selector ", getColor model.colorMode ]) ]
+                [ div [ class "timer-preset", onClick (SetTimer 5) ] [ text "5 min" ]
+                , div [ class "timer-preset", onClick (SetTimer 15) ] [ text "15 min" ]
+                , div [ class "timer-preset", onClick (SetTimer 25) ] [ text "25 min" ]
+                , div [ class "timer-preset", onClick (SetTimer 45) ] [ text "45 min" ]
+                , div [ class "timer-preset", onClick (SetTimer 60) ] [ text "60 min" ]
+                ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
             [ a [ href "/" ]
@@ -173,7 +201,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Time.every 1000 Tick
 
 
 
@@ -186,11 +214,49 @@ type Msg
     | EnterTasks String
     | CreatePlaylist
     | MarkComplete
+    | SetTimer Int
+    | Tick Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Tick _ ->
+            case model.currentTask of
+                Just t ->
+                    let
+                        elapsedTime =
+                            model.elapsedTime + 1
+                    in
+                    ( { model
+                        | elapsedTime = elapsedTime
+                      }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        SetTimer min ->
+            case model.currentTask of
+                Just t ->
+                    let
+                        time =
+                            min * 60
+
+                        currentTask =
+                            { desc = t.desc, time = Just time }
+                    in
+                    ( { model
+                        | currentTask = Just currentTask
+                        , elapsedTime = 0
+                      }
+                    , Cmd.none
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
         MarkComplete ->
             let
                 taskString =
@@ -200,12 +266,17 @@ update msg model =
 
                 tasks =
                     List.drop 1 model.tasks
+
+                currentTask =
+                    List.head tasks
             in
             case String.length (String.trim taskString) > 0 of
                 True ->
                     ( { model
                         | tasks = tasks
                         , taskString = taskString
+                        , currentTask = currentTask
+                        , elapsedTime = 0
                       }
                     , Cmd.none
                     )
@@ -224,11 +295,15 @@ update msg model =
                 tasks =
                     String.split "\n" model.taskString
                         |> List.map (\t -> { desc = t, time = Nothing })
+
+                currentTask =
+                    List.head tasks
             in
             case String.length (String.trim model.taskString) > 0 of
                 True ->
                     ( { model
                         | tasks = tasks
+                        , currentTask = currentTask
                         , route = Route.Now
                       }
                     , Nav.pushUrl model.key "/now"
