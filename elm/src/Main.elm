@@ -222,8 +222,8 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Tick _ ->
-            case model.currentTask of
-                Just t ->
+            case model.route of
+                Route.Now ->
                     let
                         elapsedTime =
                             model.elapsedTime + 1
@@ -234,7 +234,7 @@ update msg model =
                     , Cmd.none
                     )
 
-                Nothing ->
+                _ ->
                     ( model, Cmd.none )
 
         SetTimer min ->
@@ -322,7 +322,11 @@ update msg model =
         LinkClicked urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( { model
+                        | route = parseUrl url
+                      }
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
 
                 Browser.External href ->
                     ( model, Nav.load href )
