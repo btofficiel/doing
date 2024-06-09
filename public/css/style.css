@@ -98,6 +98,7 @@ div.timer-container > div.elapsed-time {
     position: absolute;
     z-index:2;
     height: 6px;
+    transition: width 1s;
     border-radius: 10px;
 }
 

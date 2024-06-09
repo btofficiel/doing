@@ -224,15 +224,25 @@ update msg model =
         Tick _ ->
             case model.route of
                 Route.Now ->
-                    let
-                        elapsedTime =
-                            model.elapsedTime + 1
-                    in
-                    ( { model
-                        | elapsedTime = elapsedTime
-                      }
-                    , Cmd.none
-                    )
+                    case model.currentTask of
+                        Just t ->
+                            case t.time of
+                                Just _ ->
+                                    let
+                                        elapsedTime =
+                                            model.elapsedTime + 1
+                                    in
+                                    ( { model
+                                        | elapsedTime = elapsedTime
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                Nothing ->
+                                    ( model, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
 
                 _ ->
                     ( model, Cmd.none )
