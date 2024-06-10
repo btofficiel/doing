@@ -7,8 +7,18 @@
     </head>
     <body>
         <script>
+            // Send Tasks during init
+            const tasks = localStorage.getItem("__taskString__");
+            const message = tasks ? tasks : "";
+
             // Init Elm
-            var app = Elm.Main.init({flags: ""});
+            var app = Elm.Main.init({flags: message});
+
+            // Save to localStorage
+            app.ports.updateTaskList.subscribe(function(taskString) {
+                localStorage.removeItem("__taskString__");
+                localStorage.setItem("__taskString__", taskString);
+            });
         </script>
     </body>
 </html>

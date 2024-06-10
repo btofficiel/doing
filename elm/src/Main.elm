@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
@@ -50,13 +50,28 @@ type alias Model =
 init : Maybe String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
     let
+        taskString =
+            case flags of
+                Just str ->
+                    str
+
+                Nothing ->
+                    ""
+
+        tasks =
+            String.split "\n" taskString
+                |> List.map (\t -> { desc = t, time = Nothing })
+
+        currentTask =
+            List.head tasks
+
         model =
             { route = parseUrl url
             , key = navKey
-            , taskString = ""
-            , tasks = []
+            , taskString = taskString
+            , tasks = tasks
             , colorMode = Light
-            , currentTask = Nothing
+            , currentTask = currentTask
             , elapsedTime = 0
             }
     in
@@ -204,6 +219,9 @@ subscriptions _ =
     Time.every 1000 Tick
 
 
+port updateTaskList : String -> Cmd msg
+
+
 
 --Update--
 
@@ -288,7 +306,7 @@ update msg model =
                         , currentTask = currentTask
                         , elapsedTime = 0
                       }
-                    , Cmd.none
+                    , updateTaskList taskString
                     )
 
                 False ->
@@ -297,7 +315,7 @@ update msg model =
                         , tasks = tasks
                         , taskString = taskString
                       }
-                    , Nav.pushUrl model.key "/"
+                    , Cmd.batch [ Nav.pushUrl model.key "/", updateTaskList taskString ]
                     )
 
         CreatePlaylist ->
@@ -316,7 +334,7 @@ update msg model =
                         , currentTask = currentTask
                         , route = Route.Now
                       }
-                    , Nav.pushUrl model.key "/now"
+                    , Cmd.batch [ Nav.pushUrl model.key "/now", updateTaskList model.taskString ]
                     )
 
                 False ->
