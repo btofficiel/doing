@@ -98,7 +98,6 @@ div.timer-container > div.elapsed-time {
     position: absolute;
     z-index:2;
     height: 6px;
-    transition: width 1s;
     border-radius: 10px;
 }
 
@@ -128,7 +127,7 @@ div.menu-ctas {
     justify-content: flex-end;
 }
 
-div.menu > a >img.menu-cta {
+div.menu > a,span >img.menu-cta {
     width: 24px;
     height: 24px;
 }

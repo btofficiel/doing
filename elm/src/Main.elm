@@ -2,7 +2,7 @@ port module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Html exposing (Html, a, div, img, text, textarea)
+import Html exposing (Html, a, div, img, span, text, textarea)
 import Html.Attributes exposing (class, href, placeholder, rows, src, style, value)
 import Html.Events exposing (onClick, onInput)
 import Route exposing (Route, parseUrl)
@@ -53,7 +53,10 @@ init flags url navKey =
         taskString =
             case flags of
                 Just str ->
-                    str
+                    String.split "\n" str
+                        |> List.map (\t -> String.trim t)
+                        |> List.filter (\t -> String.length t > 0)
+                        |> String.join "\n"
 
                 Nothing ->
                     ""
@@ -70,7 +73,7 @@ init flags url navKey =
             , key = navKey
             , taskString = taskString
             , tasks = tasks
-            , colorMode = Light
+            , colorMode = Dark
             , currentTask = currentTask
             , elapsedTime = 0
             }
@@ -139,8 +142,8 @@ focusView model =
                 ]
             ]
         , div [ class "menu-item" ]
-            [ a []
-                [ img [ class "menu-cta", src (String.concat [ "assets/settings-", getColor model.colorMode, ".svg" ]) ] []
+            [ span [ onClick ToggleColorMode ]
+                [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
                 ]
             ]
         ]
@@ -163,8 +166,10 @@ playlistView model =
         ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
-            [ a []
-                [ img [ class "menu-cta", src (String.concat [ "assets/settings-", getColor model.colorMode, ".svg" ]) ] []
+            [ div [ class "menu-item" ]
+                [ span [ onClick ToggleColorMode ]
+                    [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
+                    ]
                 ]
             ]
         ]
@@ -216,7 +221,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 1000 Tick
+    Time.every 100 Tick
 
 
 port updateTaskList : String -> Cmd msg
@@ -234,11 +239,28 @@ type Msg
     | MarkComplete
     | SetTimer Int
     | Tick Time.Posix
+    | ToggleColorMode
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ToggleColorMode ->
+            case model.colorMode of
+                Light ->
+                    ( { model
+                        | colorMode = Dark
+                      }
+                    , Cmd.none
+                    )
+
+                Dark ->
+                    ( { model
+                        | colorMode = Light
+                      }
+                    , Cmd.none
+                    )
+
         Tick _ ->
             case model.route of
                 Route.Now ->
@@ -270,7 +292,7 @@ update msg model =
                 Just t ->
                     let
                         time =
-                            min * 60
+                            min * 60 * 10
 
                         currentTask =
                             { desc = t.desc, time = Just time }
@@ -320,8 +342,14 @@ update msg model =
 
         CreatePlaylist ->
             let
-                tasks =
+                taskString =
                     String.split "\n" model.taskString
+                        |> List.map (\t -> String.trim t)
+                        |> List.filter (\t -> String.length t > 0)
+                        |> String.join "\n"
+
+                tasks =
+                    String.split "\n" taskString
                         |> List.map (\t -> { desc = t, time = Nothing })
 
                 currentTask =
@@ -330,7 +358,8 @@ update msg model =
             case String.length (String.trim model.taskString) > 0 of
                 True ->
                     ( { model
-                        | tasks = tasks
+                        | taskString = taskString
+                        , tasks = tasks
                         , currentTask = currentTask
                         , route = Route.Now
                       }
