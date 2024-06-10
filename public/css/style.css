@@ -42,6 +42,20 @@ div.content {
     grid-gap: 40px;
 }
 
+div.content.dark {
+    background: var(--dark-bg);
+    color: var(--dark-fg);
+    font-weight: 500;
+    transition: background 1s;
+}
+
+div.content.light {
+    background: var(--light-bg);
+    color: var(--light-fg);
+    font-weight: 500;
+    transition: background 1s;
+}
+
 div.timer-selector {
     grid-column: 2/3;
     margin-top: 24px;
@@ -59,19 +73,20 @@ div.timer-preset {
     padding-bottom: 8px;
     font-size: 16px;
     border: 2px solid;
+    background: rgba(0,0,0,0);
     font-weight: 500;
 }
 
 div.timer-selector.light > div.timer-preset {
     color: var(--light-preset-fg);
-    background: var(--light-bg);
     border-color: var(--light-border);
+    transition: border-color 1s;
 }
 
 div.timer-selector.dark > div.timer-preset{
     color: var(--dark-preset-fg);
-    background: var(--dark-bg);
     border-color: var(--dark-border);
+    transition: border-color 1s;
 }
 
 div.timer-container {
@@ -103,18 +118,22 @@ div.timer-container > div.elapsed-time {
 
 div.timer-container.dark {
     background: var(--dark-timer-total);
-}
-
-div.timer-container.dark > div.elapsed-time {
-    background: var(--dark-timer-elapsed);
+    transition: background 1s;
 }
 
 div.timer-container.light {
     background: var(--light-timer-total);
+    transition: background 1s;
+}
+
+div.timer-container.dark > div.elapsed-time {
+    background: var(--dark-timer-elapsed);
+    transition: background 1s;
 }
 
 div.timer-container.light > div.elapsed-time {
     background: var(--light-timer-elapsed);
+    transition: background 1s;
 }
 
 div.menu-ctas {
@@ -155,16 +174,10 @@ div.task-name.dark {
     color: var(--dark-fg);
 }
 
-div.dark {
-    background: var(--dark-bg);
-    color: var(--dark-fg);
-    font-weight: 500;
-}
-
-div.light {
-    background: var(--light-bg);
+div.task-name.light {
     color: var(--light-fg);
 }
+
 
 div.input {
     grid-column: 2/3;
@@ -180,20 +193,23 @@ textarea {
     font-size: 21.33px;
     border-radius: 10px;
     outline: none;
+    background: rgba(0,0,0,0);
     padding: 24px;
 }
 
 textarea.light {
-    background: var(--light-bg);
     border-color: var(--light-border);
     color: var(--light-fg);
-
+    transition: border-color 1s;
+    transition: color 1s;
 }
 
 textarea.dark {
-    background: var(--dark-bg);
+    background: rgba(0,0,0,0);
     border-color: var(--dark-border);
     color: var(--dark-fg);
+    transition: border-color 1s;
+    transition: color 1s;
 }
 
 
@@ -232,9 +248,11 @@ div.spotlight {
 }
 
 div.spotlight.dark {
+    transition: color 2s;
     box-shadow: 0px 4px 100px 100px rgba(251, 251, 249, 0.77);
 }
 
 div.spotlight.light {
     box-shadow: 0px 4px 100px 125px var(--dark-fg);
+    transition: color 2s;
 }
