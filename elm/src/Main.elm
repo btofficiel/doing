@@ -120,6 +120,14 @@ focusView model =
                 |> max 0
                 |> String.fromFloat
                 |> (\x -> String.concat [ x, "%" ])
+
+        taskDesc =
+            case String.length task.desc > 49 of
+                True ->
+                    String.concat [ String.slice 0 49 task.desc, "…" ]
+
+                False ->
+                    task.desc
     in
     [ case task.time of
         Just t ->
@@ -147,7 +155,8 @@ focusView model =
                 ]
             ]
         ]
-    , div [ class (String.concat [ "task-name ", getColor model.colorMode ]) ] [ text task.desc ]
+    , div [ class (String.concat [ "task-name ", getColor model.colorMode ]) ]
+        [ text taskDesc ]
     , div [ class "task-cta" ]
         [ img
             [ class "task-cta"
