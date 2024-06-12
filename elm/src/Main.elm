@@ -1,11 +1,14 @@
 port module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
+import Browser.Events as Events
 import Browser.Navigation as Nav
+import Debug
 import Html exposing (Html, a, div, img, span, text, textarea)
 import Html.Attributes exposing (class, href, placeholder, rows, src, style, value)
 import Html.Events exposing (onClick, onInput)
 import Route exposing (Route, parseUrl)
+import Task
 import Time
 import Url
 
@@ -32,7 +35,26 @@ type alias Settings =
 
 type alias Task =
     { desc : String
-    , time : Maybe Int
+    , duration : Maybe Int
+    }
+
+
+type TimerState
+    = Active TimerData
+    | Paused TimerData
+    | Inactive
+
+
+type alias TimerData =
+    { start : Time.Posix
+    , end : Time.Posix
+    , remaining : Float
+    }
+
+
+type alias CurrentTask =
+    { task : Task
+    , timerState : TimerState
     }
 
 
@@ -42,8 +64,7 @@ type alias Model =
     , taskString : String
     , tasks : List Task
     , colorMode : ColorMode
-    , currentTask : Maybe Task
-    , elapsedTime : Int
+    , currentTask : Maybe CurrentTask
     }
 
 
@@ -63,19 +84,29 @@ init flags url navKey =
 
         tasks =
             String.split "\n" taskString
-                |> List.map (\t -> { desc = t, time = Nothing })
+                |> List.map (\t -> { desc = t, duration = Nothing })
 
         currentTask =
             List.head tasks
+
+        currentTaskState =
+            case currentTask of
+                Just t ->
+                    Just
+                        { task = t
+                        , timerState = Inactive
+                        }
+
+                Nothing ->
+                    Nothing
 
         model =
             { route = parseUrl url
             , key = navKey
             , taskString = taskString
             , tasks = tasks
-            , colorMode = Dark
-            , currentTask = currentTask
-            , elapsedTime = 0
+            , colorMode = Light
+            , currentTask = currentTaskState
             }
     in
     ( model, Cmd.none )
@@ -101,25 +132,29 @@ focusView model =
         task =
             case model.currentTask of
                 Just t ->
-                    t
+                    { desc = t.task.desc
+                    , timerState = t.timerState
+                    }
 
                 Nothing ->
-                    { desc = "Error", time = Nothing }
+                    { desc = "Sorry, some error occurred"
+                    , timerState = Inactive
+                    }
 
-        time =
-            case task.time of
-                Just t ->
-                    t
+        remainingTime =
+            case task.timerState of
+                Active ts ->
+                    ts.remaining
+                        |> String.fromFloat
+                        |> (\r -> String.concat [ r, "%" ])
 
-                Nothing ->
-                    0
+                Paused ts ->
+                    ts.remaining
+                        |> String.fromFloat
+                        |> (\r -> String.concat [ r, "%" ])
 
-        elapsedTime =
-            (toFloat (time - model.elapsedTime) / toFloat time)
-                |> (\x -> 100 * x)
-                |> max 0
-                |> String.fromFloat
-                |> (\x -> String.concat [ x, "%" ])
+                Inactive ->
+                    "0%"
 
         taskDesc =
             case String.length task.desc > 49 of
@@ -129,19 +164,19 @@ focusView model =
                 False ->
                     task.desc
     in
-    [ case task.time of
-        Just t ->
-            div [ class (String.concat [ "timer-container ", getColor model.colorMode ]) ]
-                [ div [ class "elapsed-time", style "width" elapsedTime ] []
+    [ case task.timerState of
+        Inactive ->
+            div [ class (String.concat [ "timer-selector ", getColor model.colorMode ]) ]
+                [ div [ class "timer-preset", onClick (TriggerSetTimer 5) ] [ text "5 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 15) ] [ text "15 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 25) ] [ text "25 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 45) ] [ text "45 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 60) ] [ text "60 min" ]
                 ]
 
-        Nothing ->
-            div [ class (String.concat [ "timer-selector ", getColor model.colorMode ]) ]
-                [ div [ class "timer-preset", onClick (SetTimer 5) ] [ text "5 min" ]
-                , div [ class "timer-preset", onClick (SetTimer 15) ] [ text "15 min" ]
-                , div [ class "timer-preset", onClick (SetTimer 25) ] [ text "25 min" ]
-                , div [ class "timer-preset", onClick (SetTimer 45) ] [ text "45 min" ]
-                , div [ class "timer-preset", onClick (SetTimer 60) ] [ text "60 min" ]
+        _ ->
+            div [ class (String.concat [ "timer-container ", getColor model.colorMode ]) ]
+                [ div [ class "elapsed-time", style "width" remainingTime ] []
                 ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
@@ -230,7 +265,10 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Time.every 100 Tick
+    Sub.batch
+        [ Events.onAnimationFrame Tick
+        , Events.onVisibilityChange VisibilityChange
+        ]
 
 
 port updateTaskList : String -> Cmd msg
@@ -246,14 +284,97 @@ type Msg
     | EnterTasks String
     | CreatePlaylist
     | MarkComplete
-    | SetTimer Int
+    | TriggerSetTimer Int
+    | SetTimer Int Time.Posix
+    | RecalibrateTimer Time.Posix
     | Tick Time.Posix
     | ToggleColorMode
+    | VisibilityChange Events.Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        RecalibrateTimer posix ->
+            case model.currentTask of
+                Just t ->
+                    case t.timerState of
+                        Paused ts ->
+                            let
+                                start =
+                                    Time.posixToMillis ts.start
+
+                                end =
+                                    Time.posixToMillis ts.end
+
+                                current =
+                                    Time.posixToMillis posix
+
+                                elapsed =
+                                    current - start
+
+                                duration =
+                                    end - start
+
+                                remaining =
+                                    (duration - elapsed)
+                                        |> toFloat
+                                        |> (\x -> x / toFloat duration)
+                                        |> (\x -> x * 100)
+                                        |> max 0
+
+                                newTimerState =
+                                    Active { ts | remaining = remaining }
+
+                                newCurrentTask =
+                                    Just { task = t.task, timerState = newTimerState }
+                            in
+                            ( { model
+                                | currentTask = newCurrentTask
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        VisibilityChange visibility ->
+            case model.currentTask of
+                Just t ->
+                    case t.timerState of
+                        Active ts ->
+                            case visibility of
+                                Events.Hidden ->
+                                    let
+                                        newCurrentTask =
+                                            Just { t | timerState = Paused ts }
+                                    in
+                                    ( { model
+                                        | currentTask = newCurrentTask
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                _ ->
+                                    ( model, Cmd.none )
+
+                        Paused ts ->
+                            case visibility of
+                                Events.Visible ->
+                                    ( model, Task.perform RecalibrateTimer Time.now )
+
+                                _ ->
+                                    ( model, Cmd.none )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
         ToggleColorMode ->
             case model.colorMode of
                 Light ->
@@ -270,24 +391,49 @@ update msg model =
                     , Cmd.none
                     )
 
-        Tick _ ->
+        Tick posix ->
             case model.route of
                 Route.Now ->
                     case model.currentTask of
                         Just t ->
-                            case t.time of
-                                Just _ ->
+                            case t.timerState of
+                                Active ts ->
                                     let
-                                        elapsedTime =
-                                            model.elapsedTime + 1
+                                        start =
+                                            Time.posixToMillis ts.start
+
+                                        end =
+                                            Time.posixToMillis ts.end
+
+                                        current =
+                                            Time.posixToMillis posix
+
+                                        elapsed =
+                                            current - start
+
+                                        duration =
+                                            end - start
+
+                                        remaining =
+                                            (duration - elapsed)
+                                                |> toFloat
+                                                |> (\x -> x / toFloat duration)
+                                                |> (\x -> x * 100)
+                                                |> max 0
+
+                                        newTimerState =
+                                            Active { ts | remaining = remaining }
+
+                                        newCurrentTask =
+                                            Just { task = t.task, timerState = newTimerState }
                                     in
                                     ( { model
-                                        | elapsedTime = elapsedTime
+                                        | currentTask = newCurrentTask
                                       }
                                     , Cmd.none
                                     )
 
-                                Nothing ->
+                                _ ->
                                     ( model, Cmd.none )
 
                         Nothing ->
@@ -296,19 +442,40 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        SetTimer min ->
+        TriggerSetTimer min ->
+            case model.currentTask of
+                Just t ->
+                    ( model, Task.perform (SetTimer min) Time.now )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        SetTimer min now ->
             case model.currentTask of
                 Just t ->
                     let
-                        time =
-                            min * 60 * 10
+                        minToMillis =
+                            min * 60 * 1000
+
+                        end =
+                            now
+                                |> Time.posixToMillis
+                                |> (\p -> p + minToMillis)
+                                |> Time.millisToPosix
+
+                        remaining =
+                            100
 
                         currentTask =
-                            { desc = t.desc, time = Just time }
+                            { task =
+                                { desc = t.task.desc
+                                , duration = Just min
+                                }
+                            , timerState = Active { start = now, end = end, remaining = remaining }
+                            }
                     in
                     ( { model
                         | currentTask = Just currentTask
-                        , elapsedTime = 0
                       }
                     , Cmd.none
                     )
@@ -328,14 +495,21 @@ update msg model =
 
                 currentTask =
                     List.head tasks
+
+                newCurrentTaskState =
+                    case currentTask of
+                        Just t ->
+                            Just { task = t, timerState = Inactive }
+
+                        Nothing ->
+                            Nothing
             in
             case String.length (String.trim taskString) > 0 of
                 True ->
                     ( { model
                         | tasks = tasks
                         , taskString = taskString
-                        , currentTask = currentTask
-                        , elapsedTime = 0
+                        , currentTask = newCurrentTaskState
                       }
                     , updateTaskList taskString
                     )
@@ -359,17 +533,25 @@ update msg model =
 
                 tasks =
                     String.split "\n" taskString
-                        |> List.map (\t -> { desc = t, time = Nothing })
+                        |> List.map (\t -> { desc = t, duration = Nothing })
 
                 currentTask =
                     List.head tasks
+
+                newCurrentTaskState =
+                    case currentTask of
+                        Just t ->
+                            Just { task = t, timerState = Inactive }
+
+                        Nothing ->
+                            Nothing
             in
             case String.length (String.trim model.taskString) > 0 of
                 True ->
                     ( { model
                         | taskString = taskString
                         , tasks = tasks
-                        , currentTask = currentTask
+                        , currentTask = newCurrentTaskState
                         , route = Route.Now
                       }
                     , Cmd.batch [ Nav.pushUrl model.key "/now", updateTaskList model.taskString ]
