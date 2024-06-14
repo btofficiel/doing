@@ -147,6 +147,7 @@ div.menu-ctas {
 }
 
 div.menu > a,span >img.menu-cta {
+    cursor: pointer;
     width: 24px;
     height: 24px;
 }
