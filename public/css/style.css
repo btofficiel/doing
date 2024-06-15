@@ -3,6 +3,8 @@
 :root {
     --spotlight-w: 896px;
     --spotlight-h: 500px;
+    --spotlight-w-mobile: 430px;
+    --spotlight-h-mobile: 240px;
     --dark-bg: #070C0C;
     --dark-fg: #FBDFB0;
     --dark-cta: #437373;
@@ -19,9 +21,9 @@
     --light-timer-elapsed: #B5B5B5;
 }
 
-html, body {
+html {
     padding: 0;
-    overflow: hidden;
+    overflow-y: hidden;
 }
 
 body {
@@ -163,6 +165,8 @@ div.task-name {
     grid-column: 2/3;
     grid-row: 3/5;
     text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
     font-size: 67.34px;
     font-weight: 500;
     padding-top: 200px;
@@ -239,8 +243,7 @@ div.task-cta > img {
 
 div.spotlight {
     position: absolute;
-    grid-column-start: 2;
-    grid-column-end: 3;
+    grid-column:2/3;
     top: 100%;
     z-index: 10;
     width: var(--spotlight-w);
@@ -256,4 +259,64 @@ div.spotlight.dark {
 div.spotlight.light {
     box-shadow: 0px 4px 100px 125px var(--dark-fg);
     transition: color 2s;
+}
+
+
+@media only screen and (max-device-width:430px) {
+    div.content {
+        grid-template-columns:  40px 1fr 40px;
+        grid-gap:0;
+    }
+
+    div.spotlight {
+        grid-column: 1/4;
+        width: 100%;
+        height: var(--spotlight-h-mobile);
+    }
+
+    div.menu-ctas {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 20px;
+        margin-bottom: 32px;
+    }
+    
+    div.timer-container, div.timer-selector {
+        margin-bottom: 0px;
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    div.timer-selector {
+        row-gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    div.header {
+        font-size: 28.43px;
+        margin-bottom: 40px;
+    }
+
+    div.input {
+        margin-bottom: 40px;
+    }
+
+    div.task-name {
+        font-size: 37.9px;
+        padding-top: 300px;
+        padding-bottom:60px;
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+    div.task-cta > img {
+        width: 60px;
+        height: 60px;
+    }
+
+    textarea {
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+    }
 }
