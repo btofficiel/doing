@@ -244,7 +244,7 @@ div.task-cta > img {
 div.spotlight {
     position: absolute;
     grid-column:2/3;
-    top: 100%;
+    top: 100vh;
     z-index: 10;
     width: var(--spotlight-w);
     height: var(--spotlight-h);
