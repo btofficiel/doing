@@ -21,8 +21,9 @@
     --light-timer-elapsed: #B5B5B5;
 }
 
-html {
+html, body {
     padding: 0;
+    position: relative;
     overflow-y: hidden;
 }
 
