@@ -262,6 +262,17 @@ div.spotlight.light {
     transition: color 2s;
 }
 
+@media only screen and (max-device-height:667px) {
+    div.spotlight.light {
+        box-shadow: 0px 4px 100px 75px var(--dark-fg);
+    }
+
+    div.spotlight.dark {
+        box-shadow: 0px 4px 100px 75px rgba(251, 251, 249, 0.77);
+    }
+}
+
+
 
 @media only screen and (max-device-width:430px) {
     div.content {

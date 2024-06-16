@@ -309,11 +309,20 @@ update msg model =
                     )
 
                 False ->
-                    ( { model
-                        | rows = 12
-                      }
-                    , Cmd.none
-                    )
+                    case vp.viewport.width > 375 of
+                        True ->
+                            ( { model
+                                | rows = 12
+                              }
+                            , Cmd.none
+                            )
+
+                        False ->
+                            ( { model
+                                | rows = 8
+                              }
+                            , Cmd.none
+                            )
 
         RecalibrateTimer posix ->
             case model.currentTask of
