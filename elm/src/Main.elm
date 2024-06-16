@@ -1,6 +1,7 @@
 port module Main exposing (main)
 
 import Browser exposing (Document, UrlRequest)
+import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Debug
@@ -65,6 +66,7 @@ type alias Model =
     , tasks : List Task
     , colorMode : ColorMode
     , currentTask : Maybe CurrentTask
+    , rows : Int
     }
 
 
@@ -107,9 +109,10 @@ init flags url navKey =
             , tasks = tasks
             , colorMode = Light
             , currentTask = currentTaskState
+            , rows = 16
             }
     in
-    ( model, Cmd.none )
+    ( model, Task.perform AdjustRows Dom.getViewport )
 
 
 
@@ -221,7 +224,7 @@ playlistView model =
     , div [ class "input" ]
         [ textarea
             [ class (getColor model.colorMode)
-            , rows 16
+            , rows model.rows
             , placeholder "Write each task on its own line."
             , value model.taskString
             , onInput EnterTasks
@@ -290,11 +293,28 @@ type Msg
     | Tick Time.Posix
     | ToggleColorMode
     | VisibilityChange Events.Visibility
+    | AdjustRows Dom.Viewport
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        AdjustRows vp ->
+            case vp.viewport.width > 430 of
+                True ->
+                    ( { model
+                        | rows = 16
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( { model
+                        | rows = 12
+                      }
+                    , Cmd.none
+                    )
+
         RecalibrateTimer posix ->
             case model.currentTask of
                 Just t ->
