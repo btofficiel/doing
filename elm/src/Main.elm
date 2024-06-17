@@ -5,9 +5,11 @@ import Browser.Dom as Dom
 import Browser.Events as Events
 import Browser.Navigation as Nav
 import Debug
+import Dict
 import Html exposing (Html, a, div, img, span, text, textarea)
 import Html.Attributes exposing (class, href, placeholder, rows, src, style, value)
 import Html.Events exposing (onClick, onInput)
+import Json.Decode as Decode
 import Route exposing (Route, parseUrl)
 import Task
 import Time
@@ -27,6 +29,12 @@ type ColorSetting
 type ColorMode
     = Light
     | Dark
+
+
+type ShortcutKeys
+    = Tab
+    | Enter
+    | Spacebar
 
 
 type alias Settings =
@@ -66,6 +74,7 @@ type alias Model =
     , tasks : List Task
     , colorMode : ColorMode
     , currentTask : Maybe CurrentTask
+    , shortcuts : ( Maybe ShortcutKeys, Maybe ShortcutKeys )
     , rows : Int
     }
 
@@ -109,6 +118,7 @@ init flags url navKey =
             , tasks = tasks
             , colorMode = Light
             , currentTask = currentTaskState
+            , shortcuts = ( Nothing, Nothing )
             , rows = 16
             }
     in
@@ -263,6 +273,28 @@ view model =
 
 
 
+--Key Decoders--
+
+
+keyDecoder : Decode.Decoder (Maybe ShortcutKeys)
+keyDecoder =
+    Decode.map toMaybeShortcut (Decode.field "keyCode" Decode.int)
+
+
+toMaybeShortcut : Int -> Maybe ShortcutKeys
+toMaybeShortcut keyCode =
+    let
+        shortcuts =
+            Dict.fromList
+                [ ( 9, Tab )
+                , ( 13, Enter )
+                , ( 32, Spacebar )
+                ]
+    in
+    Dict.get keyCode shortcuts
+
+
+
 --Subscriptions--
 
 
@@ -271,6 +303,9 @@ subscriptions _ =
     Sub.batch
         [ Events.onAnimationFrame Tick
         , Events.onVisibilityChange VisibilityChange
+        , Events.onKeyDown (Decode.map KeyDown keyDecoder)
+        , Events.onKeyUp (Decode.map KeyUp keyDecoder)
+        , Events.onKeyPress (Decode.map KeyPress keyDecoder)
         ]
 
 
@@ -294,11 +329,97 @@ type Msg
     | ToggleColorMode
     | VisibilityChange Events.Visibility
     | AdjustRows Dom.Viewport
+    | KeyDown (Maybe ShortcutKeys)
+    | KeyUp (Maybe ShortcutKeys)
+    | KeyPress (Maybe ShortcutKeys)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        KeyDown key ->
+            case model.route of
+                Route.Index ->
+                    case key of
+                        Just Tab ->
+                            ( { model
+                                | shortcuts = ( key, Nothing )
+                              }
+                            , Cmd.none
+                            )
+
+                        Just Enter ->
+                            ( model, Cmd.none )
+
+                        _ ->
+                            ( { model
+                                | shortcuts = ( Nothing, Nothing )
+                              }
+                            , Cmd.none
+                            )
+
+                _ ->
+                    ( { model
+                        | shortcuts = ( Nothing, Nothing )
+                      }
+                    , Cmd.none
+                    )
+
+        KeyUp key ->
+            case model.route of
+                Route.Index ->
+                    case key of
+                        Just Tab ->
+                            ( { model
+                                | shortcuts = ( Nothing, Nothing )
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        KeyPress key ->
+            case model.route of
+                Route.Index ->
+                    case model.shortcuts of
+                        ( Just Tab, Nothing ) ->
+                            case key of
+                                Just Enter ->
+                                    ( { model
+                                        | shortcuts = ( Just Tab, key )
+                                      }
+                                    , Task.perform (\_ -> CreatePlaylist) (Task.succeed Nothing)
+                                    )
+
+                                _ ->
+                                    ( { model
+                                        | shortcuts = ( Nothing, Nothing )
+                                      }
+                                    , Cmd.none
+                                    )
+
+                        ( _, _ ) ->
+                            ( model, Cmd.none )
+
+                Route.Now ->
+                    case key of
+                        Just Spacebar ->
+                            ( { model
+                                | shortcuts = ( Nothing, key )
+                              }
+                            , Task.perform (\_ -> MarkComplete) (Task.succeed Nothing)
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
         AdjustRows vp ->
             case vp.viewport.width > 430 of
                 True ->
