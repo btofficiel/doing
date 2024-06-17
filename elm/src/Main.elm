@@ -32,7 +32,7 @@ type ColorMode
 
 
 type ShortcutKeys
-    = Tab
+    = Shift
     | Enter
     | Spacebar
 
@@ -286,7 +286,7 @@ toMaybeShortcut keyCode =
     let
         shortcuts =
             Dict.fromList
-                [ ( 9, Tab )
+                [ ( 16, Shift )
                 , ( 13, Enter )
                 , ( 32, Spacebar )
                 ]
@@ -341,7 +341,7 @@ update msg model =
             case model.route of
                 Route.Index ->
                     case key of
-                        Just Tab ->
+                        Just Shift ->
                             ( { model
                                 | shortcuts = ( key, Nothing )
                               }
@@ -369,7 +369,7 @@ update msg model =
             case model.route of
                 Route.Index ->
                     case key of
-                        Just Tab ->
+                        Just Shift ->
                             ( { model
                                 | shortcuts = ( Nothing, Nothing )
                               }
@@ -386,11 +386,11 @@ update msg model =
             case model.route of
                 Route.Index ->
                     case model.shortcuts of
-                        ( Just Tab, Nothing ) ->
+                        ( Just Shift, Nothing ) ->
                             case key of
                                 Just Enter ->
                                     ( { model
-                                        | shortcuts = ( Just Tab, key )
+                                        | shortcuts = ( Just Shift, key )
                                       }
                                     , Task.perform (\_ -> CreatePlaylist) (Task.succeed Nothing)
                                     )
