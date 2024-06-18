@@ -48,10 +48,16 @@ type alias Task =
     }
 
 
+type PresetVisibility
+    = ShowPresets (Maybe Time.Posix)
+    | ShowPresetsExtra Time.Posix
+    | HidePresets
+
+
 type TimerState
     = Active TimerData
     | Paused TimerData
-    | Inactive
+    | Inactive PresetVisibility
 
 
 type alias TimerData =
@@ -77,6 +83,10 @@ type alias Model =
     , shortcuts : ( Maybe ShortcutKeys, Maybe ShortcutKeys )
     , rows : Int
     }
+
+
+activateTimerPreset =
+    Task.perform ActivateTimerPreset Time.now
 
 
 init : Maybe String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -105,7 +115,7 @@ init flags url navKey =
                 Just t ->
                     Just
                         { task = t
-                        , timerState = Inactive
+                        , timerState = Inactive (ShowPresets Nothing)
                         }
 
                 Nothing ->
@@ -121,8 +131,19 @@ init flags url navKey =
             , shortcuts = ( Nothing, Nothing )
             , rows = 16
             }
+
+        maybeActivateTimerPreset =
+            case currentTaskState of
+                Just _ ->
+                    [ activateTimerPreset ]
+
+                Nothing ->
+                    []
+
+        cmds =
+            List.append [ Task.perform AdjustRows Dom.getViewport ] maybeActivateTimerPreset
     in
-    ( model, Task.perform AdjustRows Dom.getViewport )
+    ( model, Cmd.batch cmds )
 
 
 
@@ -151,7 +172,7 @@ focusView model =
 
                 Nothing ->
                     { desc = "Sorry, some error occurred"
-                    , timerState = Inactive
+                    , timerState = Inactive (ShowPresets Nothing)
                     }
 
         remainingTime =
@@ -166,7 +187,7 @@ focusView model =
                         |> String.fromFloat
                         |> (\r -> String.concat [ r, "%" ])
 
-                Inactive ->
+                Inactive _ ->
                     "0%"
 
         taskDesc =
@@ -176,9 +197,22 @@ focusView model =
 
                 False ->
                     task.desc
+
+        showTimerButton =
+            case task.timerState of
+                Inactive HidePresets ->
+                    [ div [ class "menu-item" ]
+                        [ span [ onClick TriggerShowTimerPresets ]
+                            [ img [ class "menu-cta", src (String.concat [ "assets/timer-", getColor model.colorMode, ".svg" ]) ] []
+                            ]
+                        ]
+                    ]
+
+                _ ->
+                    []
     in
     [ case task.timerState of
-        Inactive ->
+        Inactive (ShowPresets _) ->
             div [ class (String.concat [ "timer-selector ", getColor model.colorMode ]) ]
                 [ div [ class "timer-preset", onClick (TriggerSetTimer 5) ] [ text "5 min" ]
                 , div [ class "timer-preset", onClick (TriggerSetTimer 15) ] [ text "15 min" ]
@@ -187,22 +221,38 @@ focusView model =
                 , div [ class "timer-preset", onClick (TriggerSetTimer 60) ] [ text "60 min" ]
                 ]
 
+        Inactive (ShowPresetsExtra _) ->
+            div [ class (String.concat [ "timer-selector ", getColor model.colorMode ]) ]
+                [ div [ class "timer-preset", onClick (TriggerSetTimer 5) ] [ text "+5 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 15) ] [ text "+15 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 25) ] [ text "+25 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 45) ] [ text "+45 min" ]
+                , div [ class "timer-preset", onClick (TriggerSetTimer 60) ] [ text "+60 min" ]
+                ]
+
+        Inactive HidePresets ->
+            div [ class "timer-container disabled" ]
+                [ div [ class "elapsed-time", style "width" remainingTime ] []
+                ]
+
         _ ->
             div [ class (String.concat [ "timer-container ", getColor model.colorMode ]) ]
                 [ div [ class "elapsed-time", style "width" remainingTime ] []
                 ]
     , div [ class "menu-ctas" ]
-        [ div [ class "menu-item" ]
-            [ a [ href "/" ]
-                [ img [ class "menu-cta", src (String.concat [ "assets/home-", getColor model.colorMode, ".svg" ]) ] []
-                ]
-            ]
-        , div [ class "menu-item" ]
-            [ span [ onClick ToggleColorMode ]
-                [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
-                ]
-            ]
-        ]
+        (showTimerButton
+            ++ [ div [ class "menu-item" ]
+                    [ a [ href "/" ]
+                        [ img [ class "menu-cta", src (String.concat [ "assets/home-", getColor model.colorMode, ".svg" ]) ] []
+                        ]
+                    ]
+               , div [ class "menu-item" ]
+                    [ span [ onClick ToggleColorMode ]
+                        [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
+                        ]
+                    ]
+               ]
+        )
     , div [ class (String.concat [ "task-name ", getColor model.colorMode ]) ]
         [ text taskDesc ]
     , div [ class "task-cta" ]
@@ -306,6 +356,7 @@ subscriptions _ =
         , Events.onKeyDown (Decode.map KeyDown keyDecoder)
         , Events.onKeyUp (Decode.map KeyUp keyDecoder)
         , Events.onKeyPress (Decode.map KeyPress keyDecoder)
+        , Time.every 1000 HideTimerPresetVisibiltiy
         ]
 
 
@@ -332,11 +383,114 @@ type Msg
     | KeyDown (Maybe ShortcutKeys)
     | KeyUp (Maybe ShortcutKeys)
     | KeyPress (Maybe ShortcutKeys)
+    | TriggerShowTimerPresets
+    | HideTimerPresetVisibiltiy Time.Posix
+    | ActivateTimerPreset Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        TriggerShowTimerPresets ->
+            ( model, Task.perform ActivateTimerPreset Time.now )
+
+        ActivateTimerPreset posix ->
+            case model.currentTask of
+                Just t ->
+                    case t.timerState of
+                        Inactive (ShowPresets Nothing) ->
+                            let
+                                newCurrentTask =
+                                    Just { t | timerState = Inactive (ShowPresets (Just posix)) }
+                            in
+                            ( { model
+                                | currentTask = newCurrentTask
+                              }
+                            , Cmd.none
+                            )
+
+                        Inactive HidePresets ->
+                            let
+                                newCurrentTask =
+                                    Just { t | timerState = Inactive (ShowPresetsExtra posix) }
+                            in
+                            ( { model
+                                | currentTask = newCurrentTask
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        HideTimerPresetVisibiltiy posix ->
+            case model.route of
+                Route.Now ->
+                    case model.currentTask of
+                        Just t ->
+                            case t.timerState of
+                                Inactive (ShowPresets (Just mpsx)) ->
+                                    let
+                                        current =
+                                            Time.posixToMillis posix
+
+                                        start =
+                                            Time.posixToMillis mpsx
+
+                                        elapsed =
+                                            current - start
+
+                                        newCurrentTask =
+                                            case elapsed >= 60000 of
+                                                True ->
+                                                    Just { t | timerState = Inactive HidePresets }
+
+                                                False ->
+                                                    Just t
+                                    in
+                                    ( { model
+                                        | currentTask = newCurrentTask
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                Inactive (ShowPresetsExtra mpsx) ->
+                                    let
+                                        current =
+                                            Time.posixToMillis posix
+
+                                        start =
+                                            Time.posixToMillis mpsx
+
+                                        elapsed =
+                                            current - start
+
+                                        newCurrentTask =
+                                            case elapsed >= 60000 of
+                                                True ->
+                                                    Just { t | timerState = Inactive HidePresets }
+
+                                                False ->
+                                                    Just t
+                                    in
+                                    ( { model
+                                        | currentTask = newCurrentTask
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                _ ->
+                                    ( model, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
+
         KeyDown key ->
             case model.route of
                 Route.Index ->
@@ -649,7 +803,7 @@ update msg model =
                 newCurrentTaskState =
                     case currentTask of
                         Just t ->
-                            Just { task = t, timerState = Inactive }
+                            Just { task = t, timerState = Inactive (ShowPresets Nothing) }
 
                         Nothing ->
                             Nothing
@@ -661,7 +815,7 @@ update msg model =
                         , taskString = taskString
                         , currentTask = newCurrentTaskState
                       }
-                    , updateTaskList taskString
+                    , Cmd.batch [ updateTaskList taskString, activateTimerPreset ]
                     )
 
                 False ->
@@ -691,7 +845,7 @@ update msg model =
                 newCurrentTaskState =
                     case currentTask of
                         Just t ->
-                            Just { task = t, timerState = Inactive }
+                            Just { task = t, timerState = Inactive (ShowPresets Nothing) }
 
                         Nothing ->
                             Nothing
@@ -704,7 +858,7 @@ update msg model =
                         , currentTask = newCurrentTaskState
                         , route = Route.Now
                       }
-                    , Cmd.batch [ Nav.pushUrl model.key "/now", updateTaskList model.taskString ]
+                    , Cmd.batch [ Nav.pushUrl model.key "/now", updateTaskList model.taskString, activateTimerPreset ]
                     )
 
                 False ->
