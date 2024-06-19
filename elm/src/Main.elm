@@ -57,6 +57,7 @@ type PresetVisibility
 type TimerState
     = Active TimerData
     | Paused TimerData
+    | Over
     | Inactive PresetVisibility
 
 
@@ -187,7 +188,7 @@ focusView model =
                         |> String.fromFloat
                         |> (\r -> String.concat [ r, "%" ])
 
-                Inactive _ ->
+                _ ->
                     "0%"
 
         taskDesc =
@@ -201,6 +202,14 @@ focusView model =
         showTimerButton =
             case task.timerState of
                 Inactive HidePresets ->
+                    [ div [ class "menu-item" ]
+                        [ span [ onClick TriggerShowTimerPresets ]
+                            [ img [ class "menu-cta", src (String.concat [ "assets/timer-", getColor model.colorMode, ".svg" ]) ] []
+                            ]
+                        ]
+                    ]
+
+                Over ->
                     [ div [ class "menu-item" ]
                         [ span [ onClick TriggerShowTimerPresets ]
                             [ img [ class "menu-cta", src (String.concat [ "assets/timer-", getColor model.colorMode, ".svg" ]) ] []
@@ -420,6 +429,17 @@ update msg model =
                             , Cmd.none
                             )
 
+                        Over ->
+                            let
+                                newCurrentTask =
+                                    Just { t | timerState = Inactive (ShowPresetsExtra posix) }
+                            in
+                            ( { model
+                                | currentTask = newCurrentTask
+                              }
+                            , Cmd.none
+                            )
+
                         _ ->
                             ( model, Cmd.none )
 
@@ -628,7 +648,12 @@ update msg model =
                                         |> max 0
 
                                 newTimerState =
-                                    Active { ts | remaining = remaining }
+                                    case remaining > 0 of
+                                        True ->
+                                            Active { ts | remaining = remaining }
+
+                                        False ->
+                                            Over
 
                                 newCurrentTask =
                                     Just { task = t.task, timerState = newTimerState }
@@ -726,7 +751,12 @@ update msg model =
                                                 |> max 0
 
                                         newTimerState =
-                                            Active { ts | remaining = remaining }
+                                            case remaining > 0 of
+                                                True ->
+                                                    Active { ts | remaining = remaining }
+
+                                                False ->
+                                                    Over
 
                                         newCurrentTask =
                                             Just { task = t.task, timerState = newTimerState }
