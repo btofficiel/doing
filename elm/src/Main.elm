@@ -31,10 +31,11 @@ type ColorMode
     | Dark
 
 
-type ShortcutKeys
+type ShortcutKey
     = Shift
     | Enter
     | Spacebar
+    | UpArrow
 
 
 type alias Settings =
@@ -81,7 +82,7 @@ type alias Model =
     , tasks : List Task
     , colorMode : ColorMode
     , currentTask : Maybe CurrentTask
-    , shortcuts : ( Maybe ShortcutKeys, Maybe ShortcutKeys )
+    , keyHeld : Maybe ShortcutKey
     , rows : Int
     }
 
@@ -129,7 +130,7 @@ init flags url navKey =
             , tasks = tasks
             , colorMode = Light
             , currentTask = currentTaskState
-            , shortcuts = ( Nothing, Nothing )
+            , keyHeld = Nothing
             , rows = 16
             }
 
@@ -335,22 +336,23 @@ view model =
 --Key Decoders--
 
 
-keyDecoder : Decode.Decoder (Maybe ShortcutKeys)
+keyDecoder : Decode.Decoder (Maybe ShortcutKey)
 keyDecoder =
     Decode.map toMaybeShortcut (Decode.field "keyCode" Decode.int)
 
 
-toMaybeShortcut : Int -> Maybe ShortcutKeys
+toMaybeShortcut : Int -> Maybe ShortcutKey
 toMaybeShortcut keyCode =
     let
-        shortcuts =
+        keyHeld =
             Dict.fromList
                 [ ( 16, Shift )
                 , ( 13, Enter )
                 , ( 32, Spacebar )
+                , ( 38, UpArrow )
                 ]
     in
-    Dict.get keyCode shortcuts
+    Dict.get keyCode keyHeld
 
 
 
@@ -364,7 +366,6 @@ subscriptions _ =
         , Events.onVisibilityChange VisibilityChange
         , Events.onKeyDown (Decode.map KeyDown keyDecoder)
         , Events.onKeyUp (Decode.map KeyUp keyDecoder)
-        , Events.onKeyPress (Decode.map KeyPress keyDecoder)
         , Time.every 1000 HideTimerPresetVisibiltiy
         ]
 
@@ -389,9 +390,8 @@ type Msg
     | ToggleColorMode
     | VisibilityChange Events.Visibility
     | AdjustRows Dom.Viewport
-    | KeyDown (Maybe ShortcutKeys)
-    | KeyUp (Maybe ShortcutKeys)
-    | KeyPress (Maybe ShortcutKeys)
+    | KeyDown (Maybe ShortcutKey)
+    | KeyUp (Maybe ShortcutKey)
     | TriggerShowTimerPresets
     | HideTimerPresetVisibiltiy Time.Posix
     | ActivateTimerPreset Time.Posix
@@ -517,7 +517,7 @@ update msg model =
                     case key of
                         Just Shift ->
                             ( { model
-                                | shortcuts = ( key, Nothing )
+                                | keyHeld = key
                               }
                             , Cmd.none
                             )
@@ -527,14 +527,36 @@ update msg model =
 
                         _ ->
                             ( { model
-                                | shortcuts = ( Nothing, Nothing )
+                                | keyHeld = Nothing
+                              }
+                            , Cmd.none
+                            )
+
+                Route.Now ->
+                    case key of
+                        Just Shift ->
+                            ( { model
+                                | keyHeld = key
+                              }
+                            , Cmd.none
+                            )
+
+                        Just UpArrow ->
+                            ( model, Cmd.none )
+
+                        Just Spacebar ->
+                            ( model, Cmd.none )
+
+                        _ ->
+                            ( { model
+                                | keyHeld = Nothing
                               }
                             , Cmd.none
                             )
 
                 _ ->
                     ( { model
-                        | shortcuts = ( Nothing, Nothing )
+                        | keyHeld = Nothing
                       }
                     , Cmd.none
                     )
@@ -542,51 +564,69 @@ update msg model =
         KeyUp key ->
             case model.route of
                 Route.Index ->
-                    case key of
+                    case model.keyHeld of
                         Just Shift ->
-                            ( { model
-                                | shortcuts = ( Nothing, Nothing )
-                              }
-                            , Cmd.none
-                            )
-
-                        _ ->
-                            ( model, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        KeyPress key ->
-            case model.route of
-                Route.Index ->
-                    case model.shortcuts of
-                        ( Just Shift, Nothing ) ->
                             case key of
+                                Just Shift ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Cmd.none
+                                    )
+
                                 Just Enter ->
                                     ( { model
-                                        | shortcuts = ( Just Shift, key )
+                                        | keyHeld = Nothing
                                       }
                                     , Task.perform (\_ -> CreatePlaylist) (Task.succeed Nothing)
                                     )
 
                                 _ ->
                                     ( { model
-                                        | shortcuts = ( Nothing, Nothing )
+                                        | keyHeld = Nothing
                                       }
                                     , Cmd.none
                                     )
 
-                        ( _, _ ) ->
+                        _ ->
                             ( model, Cmd.none )
 
                 Route.Now ->
-                    case key of
-                        Just Spacebar ->
-                            ( { model
-                                | shortcuts = ( Nothing, key )
-                              }
-                            , Task.perform (\_ -> MarkComplete) (Task.succeed Nothing)
-                            )
+                    case model.keyHeld of
+                        Just Shift ->
+                            case key of
+                                Just Shift ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Cmd.none
+                                    )
+
+                                Just UpArrow ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Nav.pushUrl model.key "/"
+                                    )
+
+                                _ ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Cmd.none
+                                    )
+
+                        Nothing ->
+                            case key of
+                                Just Spacebar ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Task.perform (\_ -> MarkComplete) (Task.succeed Nothing)
+                                    )
+
+                                _ ->
+                                    ( model, Cmd.none )
 
                         _ ->
                             ( model, Cmd.none )
