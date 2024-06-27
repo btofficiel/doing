@@ -295,7 +295,7 @@ playlistView model =
         [ textarea
             [ class (getColor model.colorMode)
             , rows model.rows
-            , placeholder "Write each task on its own line."
+            , placeholder "Write each intention on its own line."
             , value model.taskString
             , onInput EnterTasks
             ]
