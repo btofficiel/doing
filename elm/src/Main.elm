@@ -35,7 +35,7 @@ type ShortcutKey
     = Shift
     | Enter
     | Spacebar
-    | UpArrow
+    | EorI
 
 
 type alias Settings =
@@ -361,7 +361,8 @@ toMaybeShortcut keyCode =
                 [ ( 16, Shift )
                 , ( 13, Enter )
                 , ( 32, Spacebar )
-                , ( 38, UpArrow )
+                , ( 73, EorI )
+                , ( 69, EorI )
                 ]
     in
     Dict.get keyCode keyHeld
@@ -558,7 +559,7 @@ update msg model =
                             , Cmd.none
                             )
 
-                        Just UpArrow ->
+                        Just EorI ->
                             ( model, Cmd.none )
 
                         Just Spacebar ->
@@ -619,13 +620,6 @@ update msg model =
                                     , Cmd.none
                                     )
 
-                                Just UpArrow ->
-                                    ( { model
-                                        | keyHeld = Nothing
-                                      }
-                                    , Nav.pushUrl model.key "/"
-                                    )
-
                                 _ ->
                                     ( { model
                                         | keyHeld = Nothing
@@ -640,6 +634,13 @@ update msg model =
                                         | keyHeld = Nothing
                                       }
                                     , Task.perform (\_ -> MarkComplete) (Task.succeed Nothing)
+                                    )
+
+                                Just EorI ->
+                                    ( { model
+                                        | keyHeld = Nothing
+                                      }
+                                    , Task.perform (\_ -> EditPlaylist) (Task.succeed Nothing)
                                     )
 
                                 _ ->
