@@ -149,7 +149,11 @@ div.menu-ctas {
     justify-content: flex-end;
 }
 
-div.menu > a,span >img.menu-cta {
+div.menu-item > button {
+    all: unset;
+}
+
+div.menu-item > button > img.menu-cta {
     cursor: pointer;
     width: 24px;
     height: 24px;

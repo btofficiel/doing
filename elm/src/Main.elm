@@ -6,8 +6,8 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Debug
 import Dict
-import Html exposing (Html, a, div, img, span, text, textarea)
-import Html.Attributes exposing (class, href, placeholder, rows, src, style, value)
+import Html exposing (Html, a, button, div, img, span, text, textarea)
+import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, title, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Route exposing (Route, parseUrl)
@@ -91,6 +91,10 @@ activateTimerPreset =
     Task.perform ActivateTimerPreset Time.now
 
 
+focusOnTextbox =
+    Task.attempt (\_ -> NoOp) (Dom.focus "textbox")
+
+
 init : Maybe String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url navKey =
     let
@@ -144,6 +148,7 @@ init flags url navKey =
 
         cmds =
             List.append [ Task.perform AdjustRows Dom.getViewport ] maybeActivateTimerPreset
+                |> List.append [ focusOnTextbox ]
     in
     ( model, Cmd.batch cmds )
 
@@ -204,7 +209,7 @@ focusView model =
             case task.timerState of
                 Inactive HidePresets ->
                     [ div [ class "menu-item" ]
-                        [ span [ onClick TriggerShowTimerPresets ]
+                        [ button [ title "Add additional time", onClick TriggerShowTimerPresets ]
                             [ img [ class "menu-cta", src (String.concat [ "assets/timer-", getColor model.colorMode, ".svg" ]) ] []
                             ]
                         ]
@@ -212,7 +217,7 @@ focusView model =
 
                 Over ->
                     [ div [ class "menu-item" ]
-                        [ span [ onClick TriggerShowTimerPresets ]
+                        [ button [ title "Add additional time", onClick TriggerShowTimerPresets ]
                             [ img [ class "menu-cta", src (String.concat [ "assets/timer-", getColor model.colorMode, ".svg" ]) ] []
                             ]
                         ]
@@ -252,12 +257,12 @@ focusView model =
     , div [ class "menu-ctas" ]
         (showTimerButton
             ++ [ div [ class "menu-item" ]
-                    [ a [ href "/" ]
+                    [ button [ title "Edit tasklist", onClick EditPlaylist ]
                         [ img [ class "menu-cta", src (String.concat [ "assets/home-", getColor model.colorMode, ".svg" ]) ] []
                         ]
                     ]
                , div [ class "menu-item" ]
-                    [ span [ onClick ToggleColorMode ]
+                    [ button [ title "Toggle colormode", onClick ToggleColorMode ]
                         [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
                         ]
                     ]
@@ -283,10 +288,8 @@ playlistView model =
         ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
-            [ div [ class "menu-item" ]
-                [ span [ onClick ToggleColorMode ]
-                    [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
-                    ]
+            [ button [ title "Toggle Colormode", onClick ToggleColorMode ]
+                [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
                 ]
             ]
         ]
@@ -294,6 +297,7 @@ playlistView model =
     , div [ class "input" ]
         [ textarea
             [ class (getColor model.colorMode)
+            , id "textbox"
             , rows model.rows
             , placeholder "Write each intention on its own line."
             , value model.taskString
@@ -395,11 +399,16 @@ type Msg
     | TriggerShowTimerPresets
     | HideTimerPresetVisibiltiy Time.Posix
     | ActivateTimerPreset Time.Posix
+    | EditPlaylist
+    | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        EditPlaylist ->
+            ( model, Cmd.batch [ Nav.pushUrl model.key "/", focusOnTextbox ] )
+
         TriggerShowTimerPresets ->
             ( model, Task.perform ActivateTimerPreset Time.now )
 
@@ -894,7 +903,7 @@ update msg model =
                         , tasks = tasks
                         , taskString = taskString
                       }
-                    , Cmd.batch [ Nav.pushUrl model.key "/", updateTaskList taskString ]
+                    , Cmd.batch [ Nav.pushUrl model.key "/", updateTaskList taskString, focusOnTextbox ]
                     )
 
         CreatePlaylist ->
@@ -957,6 +966,9 @@ update msg model =
             ( { model | route = parseUrl url }
             , Cmd.none
             )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 main : Program (Maybe String) Model Msg
