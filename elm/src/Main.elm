@@ -7,7 +7,7 @@ import Browser.Navigation as Nav
 import Debug
 import Dict
 import Html exposing (Html, a, button, div, img, span, text, textarea)
-import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, title, value)
+import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, title, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Route exposing (Route, parseUrl)
@@ -271,12 +271,13 @@ focusView model =
     , div [ class (String.concat [ "task-name ", getColor model.colorMode ]) ]
         [ text taskDesc ]
     , div [ class "task-cta" ]
-        [ img
-            [ class "task-cta"
-            , src (String.concat [ "assets/task-done-", getColor model.colorMode, ".svg" ])
-            , onClick MarkComplete
+        [ button [ title "Mark Done", onClick MarkComplete ]
+            [ img
+                [ class "task-cta"
+                , src (String.concat [ "assets/task-done-", getColor model.colorMode, ".svg" ])
+                ]
+                []
             ]
-            []
         ]
     ]
 
@@ -288,7 +289,7 @@ playlistView model =
         ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
-            [ button [ title "Toggle Colormode", onClick ToggleColorMode ]
+            [ button [ title "Toggle Colormode", onClick ToggleColorMode, tabindex 1 ]
                 [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
                 ]
             ]
@@ -298,6 +299,7 @@ playlistView model =
         [ textarea
             [ class (getColor model.colorMode)
             , id "textbox"
+            , tabindex 2
             , rows model.rows
             , placeholder "Write each intention on its own line."
             , value model.taskString
@@ -306,12 +308,18 @@ playlistView model =
             []
         ]
     , div [ class "task-cta" ]
-        [ img
-            [ class "task-cta"
-            , src (String.concat [ "assets/create-playlist-", getColor model.colorMode, ".svg" ])
+        [ button
+            [ title "Create Tasklist"
+            , class "task-cta"
+            , tabindex 0
             , onClick CreatePlaylist
             ]
-            []
+            [ img
+                [ class "task-cta"
+                , src (String.concat [ "assets/create-playlist-", getColor model.colorMode, ".svg" ])
+                ]
+                []
+            ]
         ]
     ]
 
