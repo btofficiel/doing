@@ -314,7 +314,7 @@ playlistView model =
 
 view : Model -> Document Msg
 view model =
-    { title = "Doing"
+    { title = "doing.is - Single tasking made easy!"
     , body =
         [ div [ class (String.concat [ "content ", getColor model.colorMode ]) ]
             (List.concat
