@@ -289,7 +289,7 @@ playlistView model =
         ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
-            [ button [ title "Toggle Colormode", onClick ToggleColorMode, tabindex 1 ]
+            [ button [ title "Toggle Colormode", onClick ToggleColorMode, tabindex 3 ]
                 [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
                 ]
             ]
@@ -299,7 +299,7 @@ playlistView model =
         [ textarea
             [ class (getColor model.colorMode)
             , id "textbox"
-            , tabindex 2
+            , tabindex 1
             , rows model.rows
             , placeholder "Write each intention on its own line."
             , value model.taskString
@@ -311,7 +311,7 @@ playlistView model =
         [ button
             [ title "Create Tasklist"
             , class "task-cta"
-            , tabindex 0
+            , tabindex 2
             , onClick CreatePlaylist
             ]
             [ img
