@@ -147,7 +147,7 @@ init flags url navKey =
                     []
 
         cmds =
-            List.append [ Task.perform AdjustRows Dom.getViewport ] maybeActivateTimerPreset
+            List.append [ Task.perform GetInitialViewport Dom.getViewport ] maybeActivateTimerPreset
                 |> List.append [ focusOnTextbox ]
     in
     ( model, Cmd.batch cmds )
@@ -377,6 +377,7 @@ subscriptions _ =
     Sub.batch
         [ Events.onAnimationFrame Tick
         , Events.onVisibilityChange VisibilityChange
+        , Events.onResize (\w h -> AdjustRows (toFloat w) (toFloat h))
         , Events.onKeyDown (Decode.map KeyDown keyDecoder)
         , Events.onKeyUp (Decode.map KeyUp keyDecoder)
         , Time.every 1000 HideTimerPresetVisibiltiy
@@ -402,7 +403,8 @@ type Msg
     | Tick Time.Posix
     | ToggleColorMode
     | VisibilityChange Events.Visibility
-    | AdjustRows Dom.Viewport
+    | GetInitialViewport Dom.Viewport
+    | AdjustRows Float Float
     | KeyDown (Maybe ShortcutKey)
     | KeyUp (Maybe ShortcutKey)
     | TriggerShowTimerPresets
@@ -415,6 +417,13 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GetInitialViewport vp ->
+            let
+                cmd =
+                    Task.perform (\_ -> AdjustRows vp.viewport.width vp.viewport.height) (Task.succeed Nothing)
+            in
+            ( model, cmd )
+
         EditPlaylist ->
             ( model, Cmd.batch [ Nav.pushUrl model.key "/", focusOnTextbox ] )
 
@@ -652,30 +661,19 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        AdjustRows vp ->
-            case vp.viewport.width > 430 of
-                True ->
-                    ( { model
-                        | rows = 16
-                      }
-                    , Cmd.none
-                    )
-
-                False ->
-                    case vp.viewport.width > 375 of
-                        True ->
-                            ( { model
-                                | rows = 12
-                              }
-                            , Cmd.none
-                            )
-
-                        False ->
-                            ( { model
-                                | rows = 8
-                              }
-                            , Cmd.none
-                            )
+        AdjustRows x y ->
+            let
+                rows =
+                    y
+                        |> (\height -> height / 1070)
+                        |> (\frac -> frac * 16)
+                        |> floor
+            in
+            ( { model
+                | rows = rows
+              }
+            , Cmd.none
+            )
 
         RecalibrateTimer posix ->
             case model.currentTask of
