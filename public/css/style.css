@@ -380,4 +380,14 @@ div.spotlight.light {
         box-sizing: border-box;
         font-size: 16px;
     }
+
+    div.spotlight.dark {
+        transition: color 2s;
+        box-shadow: 0px 4px 75px 75px rgba(251, 251, 249, 0.77);
+    }
+
+    div.spotlight.light {
+        box-shadow: 0px 4px 75px 90px var(--dark-fg);
+        transition: color 2s;
+    }
 }
