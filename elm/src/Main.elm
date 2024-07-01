@@ -32,7 +32,7 @@ type ColorMode
 
 
 type ShortcutKey
-    = Shift
+    = CmdOrCtrl
     | Enter
     | Spacebar
     | EorI
@@ -358,7 +358,8 @@ toMaybeShortcut keyCode =
     let
         keyHeld =
             Dict.fromList
-                [ ( 16, Shift )
+                [ ( 17, CmdOrCtrl )
+                , ( 91, CmdOrCtrl )
                 , ( 13, Enter )
                 , ( 32, Spacebar )
                 , ( 73, EorI )
@@ -542,7 +543,7 @@ update msg model =
             case model.route of
                 Route.Index ->
                     case key of
-                        Just Shift ->
+                        Just CmdOrCtrl ->
                             ( { model
                                 | keyHeld = key
                               }
@@ -561,7 +562,7 @@ update msg model =
 
                 Route.Now ->
                     case key of
-                        Just Shift ->
+                        Just CmdOrCtrl ->
                             ( { model
                                 | keyHeld = key
                               }
@@ -592,9 +593,9 @@ update msg model =
             case model.route of
                 Route.Index ->
                     case model.keyHeld of
-                        Just Shift ->
+                        Just CmdOrCtrl ->
                             case key of
-                                Just Shift ->
+                                Just CmdOrCtrl ->
                                     ( { model
                                         | keyHeld = Nothing
                                       }
@@ -620,9 +621,9 @@ update msg model =
 
                 Route.Now ->
                     case model.keyHeld of
-                        Just Shift ->
+                        Just CmdOrCtrl ->
                             case key of
-                                Just Shift ->
+                                Just CmdOrCtrl ->
                                     ( { model
                                         | keyHeld = Nothing
                                       }
