@@ -2,9 +2,9 @@
 
 :root {
     --spotlight-w: 896px;
-    --spotlight-h: 500px;
+    --spotlight-h: 46vh;
     --spotlight-w-mobile: 430px;
-    --spotlight-h-mobile: 240px;
+    --spotlight-h-mobile: 46vh;
     --dark-bg: #070C0C;
     --dark-fg: #FBDFB0;
     --dark-cta: #437373;
@@ -142,8 +142,8 @@ div.timer-container.light > div.elapsed-time {
 div.menu-ctas {
     display: flex;
     gap: 12px;
-    padding-left: 80px;
-    padding-right: 80px;
+    padding-left: min(80px, 4vw);
+    padding-right: min(80px, 4vw);
     padding-top: 20px;
     grid-column: 2/4;
     justify-content: flex-end;
@@ -212,7 +212,7 @@ div.input {
 }
 
 textarea {
-    width: 692px;
+    width: 80%;
     resize: none;
     font-family: "Inter", sans-serif;
     font-weight: 500;
@@ -289,38 +289,45 @@ div.spotlight {
     grid-column:2/3;
     top: 100vh;
     z-index: 10;
-    width: var(--spotlight-w);
+    width: max(var(--spotlight-w), 56vw);
     height: var(--spotlight-h);
     border-radius: 50%;
 }
 
 div.spotlight.dark {
     transition: color 2s;
-    box-shadow: 0px 4px 100px 100px rgba(251, 251, 249, 0.77);
+    box-shadow: 0px 4px 50px 50px rgba(251, 251, 249, 0.77);
 }
 
 div.spotlight.light {
-    box-shadow: 0px 4px 100px 125px var(--dark-fg);
+    box-shadow: 0px 4px 50px 60px var(--dark-fg);
     transition: color 2s;
 }
 
-@media only screen and (max-device-height:667px) {
-    div.spotlight.light {
-        box-shadow: 0px 4px 100px 75px var(--dark-fg);
+
+
+@media only screen and (max-width: 1000px) {
+    div.content {
+        grid-template-columns: 16px 1fr 16px;
     }
 
-    div.spotlight.dark {
-        box-shadow: 0px 4px 100px 75px rgba(251, 251, 249, 0.77);
+    div.spotlight {
+        width: 100%;
     }
 }
 
+@media only screen and (max-height: 600px) {
+    div.spotlight {
+        display: none;
+    }
+}
 
-
-@media only screen and (max-device-width:430px) {
+@media only screen and (max-width:430px) {
     div.content {
         grid-template-columns:  40px 1fr 40px;
         grid-gap:0;
     }
+
 
     div.spotlight {
         grid-column: 1/4;
