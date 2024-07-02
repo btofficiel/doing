@@ -309,6 +309,7 @@ div.spotlight.light {
 @media only screen and (max-width: 1000px) {
     div.content {
         grid-template-columns: 16px 1fr 16px;
+        grid-gap: 20px;
     }
 
     div.spotlight {
