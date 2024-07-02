@@ -502,7 +502,7 @@ update msg model =
                                             current - start
 
                                         newCurrentTask =
-                                            case elapsed >= 60000 of
+                                            case elapsed >= 15000 of
                                                 True ->
                                                     Just { t | timerState = Inactive HidePresets }
 
@@ -527,7 +527,7 @@ update msg model =
                                             current - start
 
                                         newCurrentTask =
-                                            case elapsed >= 60000 of
+                                            case elapsed >= 15000 of
                                                 True ->
                                                     Just { t | timerState = Inactive HidePresets }
 
