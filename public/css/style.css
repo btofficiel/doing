@@ -149,7 +149,7 @@ div.menu-ctas {
     justify-content: flex-end;
 }
 
-div.menu-item > button {
+div.menu-item > button, a {
     border-radius: 50%;
     padding: 4px;
     border: none;
@@ -164,7 +164,17 @@ div.light > div.menu-ctas > div.menu-item > button:focus {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
+div.light > div.menu-ctas > div.menu-item > a:focus {
+    outline: none;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
 div.dark > div.menu-ctas > div.menu-item > button:focus {
+    outline: none;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+
+div.dark > div.menu-ctas > div.menu-item > a:focus {
     outline: none;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
 }
