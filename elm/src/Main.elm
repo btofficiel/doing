@@ -7,7 +7,7 @@ import Browser.Navigation as Nav
 import Debug
 import Dict
 import Html exposing (Html, a, button, div, img, span, text, textarea)
-import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, title, value)
+import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, target, title, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Route exposing (Route, parseUrl)
@@ -262,7 +262,7 @@ focusView model =
                         ]
                     ]
                , div [ class "menu-item" ]
-                    [ a [ href "https://github.com/btofficiel/doing" ]
+                    [ a [ href "https://github.com/btofficiel/doing", target "_blank" ]
                         [ img [ class "menu-cta", src (String.concat [ "assets/github-", getColor model.colorMode, ".svg" ]) ] []
                         ]
                     ]
@@ -294,7 +294,7 @@ playlistView model =
         ]
     , div [ class "menu-ctas" ]
         [ div [ class "menu-item" ]
-            [ a [ href "https://github.com/btofficiel/doing", tabindex 3 ]
+            [ a [ href "https://github.com/btofficiel/doing", tabindex 3, target "_blank" ]
                 [ img [ class "menu-cta", src (String.concat [ "assets/github-", getColor model.colorMode, ".svg" ]) ] []
                 ]
             ]
