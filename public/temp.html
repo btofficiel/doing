@@ -2,20 +2,21 @@
     <head>
         <title>Doing.is</title>
         <link rel="stylesheet" href="css/style.css"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <div class="content light">
-            <div class="spotlight light"></div>
-            <!--
+        <div class="content dark">
+            <div class="spotlight dark"></div>
             <div class="timer-container disabled">
                 <div class="elapsed-time"></div>
             </div>
-            -->
+            <!--
             <div class="timer-selector dark">
                 <div class="timer-preset">15 min</div>
                 <div class="timer-preset">15 min</div>
                 <div class="timer-preset">15 min</div>
             </div>
+            -->
             <div class="menu-ctas">
                 <!--
                 <div class="menu-item">
@@ -23,18 +24,36 @@
                 </div>
                 -->
                 <div class="menu-item">
-                    <img class="menu-cta" src="assets/settings-light.svg"/>
+                    <button>
+                        <img class="menu-cta" src="assets/github-dark.svg"/>
+                    </button>
                 </div>
             </div>
+            <!--
             <div class="header">What's on your mind for today?</div>
             <div class="input">
                 <textarea class="light" placeholder="Write each task on its own line and press ENTER." rows="16" resize="none"></textarea>
             </div>
-            <!--
             <div class="task-name dark">Making wireframes for NDT clone</div>
-            -->
             <div class="task-cta">
                 <img class="task-cta" src="assets/create-playlist-light.svg"/>
+            </div>
+            -->
+            <div class="header">
+                You’ve wrapped it up. Good work!
+            </div>
+            <div class="email">
+                <p>We’re working on some interesting new features that we would love to tell you about later</p>
+                <div class="email-wrapper">
+                    <input type="email" placeholder="Enter your email"/>
+                    <button><img src="/assets/create-playlist-dark.svg"/></button>
+                </div>
+            </div>
+            <div class="success-cta">
+                <button>
+                    <img src="/assets/another-list-dark.svg"/>
+                        Create another list
+                </button>
             </div>
         </div>
     </body>

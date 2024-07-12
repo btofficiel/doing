@@ -19,6 +19,7 @@
     --dark-timer-elapsed: #474B4B;
     --light-timer-total: #E1E1E1;
     --light-timer-elapsed: #B5B5B5;
+    --light-email-text: #737373;
 }
 
 html, body {
@@ -314,6 +315,135 @@ div.spotlight.light {
     transition: color 2s;
 }
 
+div.email {
+    display: flex;
+    grid-column: 2/3;
+    padding-top: 80px;
+    padding-bottom: 80px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-top: 1px solid;
+    border-width: 75%;
+    gap: 40px;
+    border-bottom: 1px solid;
+}
+
+div.email > p {
+    text-align: center;
+    margin: 0px;
+    font-size: 37.9px;
+    font-weight: 500;
+}
+
+
+div.light > div.email {
+    border-color: var(--light-border);
+}
+
+div.dark > div.email {
+    border-color: var(--dark-border);
+}
+
+div.light > div.email > p {
+    color: var(--light-email-text);
+}
+
+div.dark > div.email > p {
+    color: var(--light-cta);
+}
+
+div.email-wrapper {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid;
+    border-radius: 10px;
+}
+
+div.task-cta > button, div.email-wrapper > button {
+    border-radius: 50%;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: inline-block;
+}
+
+div.email-wrapper > button > img {
+    width: 48px;
+    height: 48px;
+}
+
+div.email-wrapper > input {
+    padding: 8px;
+    border: none;
+    outline: none;
+    font-size: 28.43px;
+    width: min(500px, 100%);
+    text-align: center;
+    background: rgba(0,0,0,0);
+}
+
+div.light > div.email > div.email-wrapper > input {
+    color: var(--light-fg);
+}
+
+div.dark > div.email > div.email-wrapper > input {
+    color: var(--dark-fg);
+}
+
+div.light > div.email > div.email-wrapper {
+    border-color: var(--light-border);
+}
+
+div.dark > div.email > div.email-wrapper {
+    border-color: var(--dark-border);
+}
+
+div.success-cta {
+    display: flex;
+    grid-column: 2/3;
+    justify-content: center;
+    align-items: center;
+}
+
+div.success-cta > button {
+    border-radius: 10px;
+    padding: 16px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 28.43px;
+}
+
+div.success-cta > button > img {
+    width: 24px;
+    height: 24px;
+}
+
+div.light > div.success-cta > button {
+    background: var(--light-cta);
+    color: white;
+}
+
+div.dark > div.success-cta > button {
+    background: var(--dark-cta);
+    color: var(--dark-bg);
+}
+
+div.light > div.success-cta > button:focus {
+    outline: none;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+div.dark > div.success-cta > button:focus {
+    outline: none;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+
 
 
 @media only screen and (max-width: 1000px) {
@@ -367,6 +497,38 @@ div.spotlight.light {
     div.header {
         font-size: 28.43px;
         margin-bottom: 40px;
+    }
+
+    div.email {
+        gap: 20px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    div.email > p  {
+        font-size: 21.33px;
+    }
+
+    div.email-wrapper > input {
+        font-size: 21.33px;
+    }
+
+    div.email-wrapper > button > img {
+        width: 40px;
+        height: 40px;
+    }
+
+    div.success-cta {
+        margin-top:20px;
+    }
+
+    div.success-cta > button > img {
+        width: 20px;
+        height: 20px;
+    }
+
+    div.success-cta > button {
+        font-size: 21.33px;
     }
 
     div.input {

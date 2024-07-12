@@ -7,6 +7,7 @@ import Url.Parser exposing (Parser, map, oneOf, parse, s, top)
 type Route
     = Index
     | Now
+    | Done
     | NotFound
 
 
@@ -25,4 +26,5 @@ matchRoute =
     oneOf
         [ map Index top
         , map Now (s "now")
+        , map Done (s "done")
         ]

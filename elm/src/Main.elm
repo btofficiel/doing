@@ -6,8 +6,8 @@ import Browser.Events as Events
 import Browser.Navigation as Nav
 import Debug
 import Dict
-import Html exposing (Html, a, button, div, img, span, text, textarea)
-import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, target, title, value)
+import Html exposing (Html, a, button, div, img, input, p, span, text, textarea)
+import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Route exposing (Route, parseUrl)
@@ -334,6 +334,42 @@ playlistView model =
     ]
 
 
+doneView : Model -> List (Html Msg)
+doneView model =
+    [ div [ class "timer-container disabled" ]
+        [ div [ class "elapsed-time" ] []
+        ]
+    , div [ class "menu-ctas" ]
+        [ div [ class "menu-item" ]
+            [ a [ href "https://github.com/btofficiel/doing", target "_blank" ]
+                [ img [ class "menu-cta", src (String.concat [ "assets/github-", getColor model.colorMode, ".svg" ]) ] []
+                ]
+            ]
+        , div [ class "menu-item" ]
+            [ button [ title "Toggle Colormode", onClick ToggleColorMode ]
+                [ img [ class "menu-cta", src (String.concat [ "assets/color-mode-", getColor model.colorMode, ".svg" ]) ] []
+                ]
+            ]
+        ]
+    , div [ class "header" ] [ text "You’ve wrapped it up. Good work!" ]
+    , div [ class "email" ]
+        [ p [] [ text "We’re working on some interesting new features that we would love to tell you about later" ]
+        , div [ class "email-wrapper" ]
+            [ input [ type_ "email", placeholder "Enter your email" ] []
+            , button []
+                [ img [ src (String.concat [ "assets/create-playlist-", getColor model.colorMode, ".svg" ]) ] []
+                ]
+            ]
+        ]
+    , div [ class "success-cta" ]
+        [ button [ onClick EditPlaylist ]
+            [ img [ src (String.concat [ "assets/another-list-", getColor model.colorMode, ".svg" ]) ] []
+            , text "Create another list"
+            ]
+        ]
+    ]
+
+
 view : Model -> Document Msg
 view model =
     { title = "doing.is - Single tasking made easy!"
@@ -345,6 +381,9 @@ view model =
                 , case model.route of
                     Route.Now ->
                         focusView model
+
+                    Route.Done ->
+                        doneView model
 
                     _ ->
                         playlistView model
@@ -921,7 +960,7 @@ update msg model =
                         , tasks = tasks
                         , taskString = taskString
                       }
-                    , Cmd.batch [ Nav.pushUrl model.key "/", updateTaskList taskString, focusOnTextbox ]
+                    , Cmd.batch [ Nav.pushUrl model.key "/done", updateTaskList taskString ]
                     )
 
         CreatePlaylist ->
