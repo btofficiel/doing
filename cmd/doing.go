@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -44,6 +45,43 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
 
+type EmailRequest struct {
+	Email string `json:"email"`
+}
+
+func handleEmailPost(w http.ResponseWriter, r *http.Request) {
+	var req EmailRequest
+
+	// Decode the JSON body
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Open the CSV file in append mode, or create it if it doesn't exist
+	file, err := os.OpenFile("emails.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		http.Error(w, "Failed to open CSV file", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// Create a CSV writer
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write the email to the CSV file
+	err = writer.Write([]string{req.Email})
+	if err != nil {
+		http.Error(w, "Failed to write to CSV file", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Email written to CSV successfully"})
+}
+
 func main() {
 	router := mux.NewRouter()
 
@@ -51,6 +89,8 @@ func main() {
 		// an example API handler
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 	})
+
+	router.HandleFunc("/email", handleEmailPost).Methods("POST")
 
 	spa := spaHandler{staticPath: "public", indexPath: "index.html"}
 	router.PathPrefix("/").Handler(spa)

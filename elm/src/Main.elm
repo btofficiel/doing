@@ -9,7 +9,10 @@ import Dict
 import Html exposing (Html, a, button, div, img, input, p, span, text, textarea)
 import Html.Attributes exposing (class, href, id, placeholder, rows, src, style, tabindex, target, title, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as Decode
+import Http
+import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
+import RemoteData exposing (WebData)
 import Route exposing (Route, parseUrl)
 import Task
 import Time
@@ -75,6 +78,11 @@ type alias CurrentTask =
     }
 
 
+type alias Response =
+    { message : String
+    }
+
+
 type alias Model =
     { route : Route
     , key : Nav.Key
@@ -84,6 +92,8 @@ type alias Model =
     , currentTask : Maybe CurrentTask
     , keyHeld : Maybe ShortcutKey
     , rows : Int
+    , email : String
+    , emailRequest : WebData Response
     }
 
 
@@ -93,6 +103,25 @@ activateTimerPreset =
 
 focusOnTextbox =
     Task.attempt (\_ -> NoOp) (Dom.focus "textbox")
+
+
+emailEncoder : String -> Encode.Value
+emailEncoder email =
+    Encode.object [ ( "email", Encode.string email ) ]
+
+
+responseDecoder : Decoder Response
+responseDecoder =
+    Decode.map Response (Decode.field "message" Decode.string)
+
+
+postEmail : String -> Cmd Msg
+postEmail email =
+    Http.post
+        { url = "/email"
+        , body = Http.jsonBody (emailEncoder email)
+        , expect = Http.expectJson (RemoteData.fromResult >> GotResponse) responseDecoder
+        }
 
 
 init : Maybe String -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -136,6 +165,8 @@ init flags url navKey =
             , currentTask = currentTaskState
             , keyHeld = Nothing
             , rows = 16
+            , email = ""
+            , emailRequest = RemoteData.NotAsked
             }
 
         maybeActivateTimerPreset =
@@ -353,14 +384,21 @@ doneView model =
         ]
     , div [ class "header" ] [ text "You’ve wrapped it up. Good work!" ]
     , div [ class "email" ]
-        [ p [] [ text "We’re working on some interesting new features that we would love to tell you about later" ]
-        , div [ class "email-wrapper" ]
-            [ input [ type_ "email", placeholder "Enter your email" ] []
-            , button []
-                [ img [ src (String.concat [ "assets/create-playlist-", getColor model.colorMode, ".svg" ]) ] []
+        (case model.emailRequest of
+            RemoteData.Success _ ->
+                [ p [] [ text "Thank you for sharing your email with us." ]
                 ]
-            ]
-        ]
+
+            _ ->
+                [ p [] [ text "We’re working on some interesting new features that we would love to tell you about later" ]
+                , div [ class "email-wrapper" ]
+                    [ input [ type_ "email", placeholder "Enter your email", value model.email, onInput EnterEmail ] []
+                    , button [ onClick SubmitEmail ]
+                        [ img [ src (String.concat [ "assets/create-playlist-", getColor model.colorMode, ".svg" ]) ] []
+                        ]
+                    ]
+                ]
+        )
     , div [ class "success-cta" ]
         [ button [ onClick EditPlaylist ]
             [ img [ src (String.concat [ "assets/another-list-", getColor model.colorMode, ".svg" ]) ] []
@@ -462,11 +500,31 @@ type Msg
     | ActivateTimerPreset Time.Posix
     | EditPlaylist
     | NoOp
+    | GotResponse (WebData Response)
+    | SubmitEmail
+    | EnterEmail String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        EnterEmail email ->
+            ( { model
+                | email = email
+              }
+            , Cmd.none
+            )
+
+        SubmitEmail ->
+            ( model, postEmail model.email )
+
+        GotResponse resp ->
+            ( { model
+                | emailRequest = resp
+              }
+            , Cmd.none
+            )
+
         GetInitialViewport vp ->
             let
                 cmd =
